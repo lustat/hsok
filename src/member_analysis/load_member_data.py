@@ -68,14 +68,28 @@ if __name__ == '__main__':
 
             wb.save(output_excel)
 
+    year_sex_total = summary.groupby(["Kön", 'År']).sum().reset_index(drop=False)
+
     g = sns.catplot(
-        data=penguins, kind="bar",
-        x="species", y="body_mass_g", hue="sex",
-        ci="sd", palette="dark", alpha=.6, height=6
+        data=year_sex_total, kind="bar",
+        x="År", y="Antal", hue="Kön",
+        palette="dark", alpha=.6, height=6
     )
     g.despine(left=True)
-    g.set_axis_labels("", "Body mass (g)")
+    g.set_axis_labels("", "Antal")
     g.legend.set_title("")
+    g.savefig('yearly_overview.png')
 
+    this_year = summary.loc[summary['År'] == summary['År'].max()]
+
+    g = sns.catplot(
+        data=this_year, kind="bar",
+        x="Ålder", y="Antal", hue="Kön",
+        palette="dark", alpha=.6, height=6
+    )
+    g.despine(left=True)
+    g.set_axis_labels("", "Antal")
+    g.legend.set_title("")
+    g.savefig('this_year.png')
     print('Finished')
 
