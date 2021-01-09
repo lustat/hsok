@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 import openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
 import collections
+import seaborn as sns
 
 
 def load_member_data(relative_excel_path: str, year_to_sheet: collections.defaultdict):
@@ -37,7 +38,9 @@ if __name__ == '__main__':
     years = [2019, 2020]
     year_to_sheet_name = collections.defaultdict(lambda: 'SearchPersons')
     year_to_sheet_name[2019] = 'Data'
+    excel_flag = False
 
+    summary = pd.DataFrame()
     for year in years:
         excel_file = 'data/members/ExportedPersons_' + str(year) + '.xlsx'
         df = load_member_data(excel_file, year_to_sheet_name)
@@ -45,22 +48,34 @@ if __name__ == '__main__':
         count_df = df[['kon', 'binned', 'fornamn']].groupby(by=['kon', 'binned']).count()
         count_df = count_df.reset_index()
         count_df.columns = ['Kön', 'Ålder', 'Antal']
+        count_df = count_df.assign(**{'År': year})
+        summary = pd.concat([summary, count_df], axis=0)
+        print(summary)
 
-        print(count_df)
+        if excel_flag:
+            df_out = df[['fornamn', 'efternamn', 'fodelsedat_personnr', 'kon', 'age', 'binned']]
+            print(df_out)
 
-        df_out = df[['fornamn', 'efternamn', 'fodelsedat_personnr', 'kon', 'age', 'binned']]
-        print(df_out)
+            output_excel = rel2fullpath(os.path.join(os.path.split(excel_file)[0], 'PersonAges_' + str(year) + '.xlsx'))
+            wb = openpyxl.Workbook()
+            worksheet = wb.create_sheet('Data')
+            for r in dataframe_to_rows(df_out, index=False, header=True):
+                worksheet.append(r)
 
-        output_excel = rel2fullpath(os.path.join(os.path.split(excel_file)[0], 'PersonAges_' + str(year) + '.xlsx'))
-        wb = openpyxl.Workbook()
-        worksheet = wb.create_sheet('Data')
-        for r in dataframe_to_rows(df_out, index=False, header=True):
-            worksheet.append(r)
+            worksheet = wb.create_sheet('Stat')
+            for r in dataframe_to_rows(count_df, index=False, header=True):
+                worksheet.append(r)
 
-        worksheet = wb.create_sheet('Stat')
-        for r in dataframe_to_rows(count_df, index=False, header=True):
-            worksheet.append(r)
+            wb.save(output_excel)
 
-        wb.save(output_excel)
+    g = sns.catplot(
+        data=penguins, kind="bar",
+        x="species", y="body_mass_g", hue="sex",
+        ci="sd", palette="dark", alpha=.6, height=6
+    )
+    g.despine(left=True)
+    g.set_axis_labels("", "Body mass (g)")
+    g.legend.set_title("")
+
     print('Finished')
 
