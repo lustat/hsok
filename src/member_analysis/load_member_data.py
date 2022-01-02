@@ -19,7 +19,8 @@ def load_member_data(relative_excel_path: str, year_to_sheet: collections.defaul
                   for column in new_columns]
 
     df = df.assign(birth_date=[datetime.datetime.strptime(day, '%Y-%m-%d') for day in df.fodelsedat_personnr])
-    today = datetime.datetime(2019, 12, 31)
+    today = datetime.datetime(year, 12, 31)
+    print(today)
     df = df.assign(age=[relativedelta(today, birth).years for birth in df.birth_date])
 
     # Binned age
@@ -35,7 +36,7 @@ if __name__ == '__main__':
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
 
-    years = [2019, 2020]
+    years = [2019, 2020, 2021]
     year_to_sheet_name = collections.defaultdict(lambda: 'SearchPersons')
     year_to_sheet_name[2019] = 'Data'
     excel_flag = False
