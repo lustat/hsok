@@ -7,6 +7,7 @@ import openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
 import collections
 import seaborn as sns
+from definitions import SOURCE_DIR
 
 
 def load_member_data(relative_excel_path: str, year_to_sheet: collections.defaultdict):
@@ -26,15 +27,25 @@ def load_member_data(relative_excel_path: str, year_to_sheet: collections.defaul
     # Binned age
     age_splits = [-1, 7, 12, 16, 20, 25, 100000]
     labels = ['0-7', '8-12', '13-16', '17-20', '21-25', '26+']
+    bin_category_to_number = {}
+    for key, item in enumerate(labels):
+        bin_category_to_number[item] = key
+    print(bin_category_to_number)
+
     df = df.assign(binned=pd.cut(df['age'], bins=age_splits, labels=labels))
     df = df.assign(binned=[str(age_bin) for age_bin in df.binned])
-    return df
+    df = df.assign(bin_order=df.binned.replace(bin_category_to_number))
+    return df, bin_category_to_number
 
 
 if __name__ == '__main__':
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
+
+    output_directory = SOURCE_DIR + '\member_analysis'
+    if not os.path.exists(output_directory):
+        raise ValueError('Unknown folder ' + output_directory)
 
     years = [2019, 2020, 2021]
     year_to_sheet_name = collections.defaultdict(lambda: 'SearchPersons')
@@ -44,7 +55,7 @@ if __name__ == '__main__':
     summary = pd.DataFrame()
     for year in years:
         excel_file = 'data/members/ExportedPersons_' + str(year) + '.xlsx'
-        df = load_member_data(excel_file, year_to_sheet_name)
+        df, cat_to_num = load_member_data(excel_file, year_to_sheet_name)
 
         count_df = df[['kon', 'binned', 'fornamn']].groupby(by=['kon', 'binned']).count()
         count_df = count_df.reset_index()
@@ -79,9 +90,15 @@ if __name__ == '__main__':
     g.despine(left=True)
     g.set_axis_labels("", "Antal")
     g.legend.set_title("")
-    g.savefig('yearly_overview.png')
+    figure = output_directory + '/yearly_overview_since_2019.png'
+    g.savefig(figure)
+    print('Created ' + figure)
 
     this_year = summary.loc[summary['År'] == summary['År'].max()]
+    this_year = this_year.assign(bin_number=this_year['Ålder'].replace(cat_to_num))
+    this_year = this_year.sort_values(by='bin_number')
+
+    this_year.to_excel(output_directory + '/this_year.xlsx')
 
     g = sns.catplot(
         data=this_year, kind="bar",
@@ -91,6 +108,12 @@ if __name__ == '__main__':
     g.despine(left=True)
     g.set_axis_labels("", "Antal")
     g.legend.set_title("")
+
+    ax = g.facet_axis(0, 0)
+    for c in ax.containers:
+        labels = [int(v.get_height()) for v in c]
+        ax.bar_label(c, labels=labels, label_type='edge')
+
     g.savefig('this_year.png')
     print('Finished')
 

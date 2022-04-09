@@ -75,6 +75,6 @@ if __name__ == '__main__':
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
 
-    excel_file = 'data/Aktiviteter_ per_person_och_dag_2020.xlsx'
-    # output_excel = rel2fullpath(os.path.join(os.path.split(excel_file)[0], 'PersonAges_2019.xlsx'))
-    df0 = get_thursday_stats(excel_file, year=2020)
+    excel_file = 'data/Aktiviteter_per_person_och_dag_2021.xlsx'
+    df0 = get_thursday_stats(excel_file, year=2021)
+    print(df0)
