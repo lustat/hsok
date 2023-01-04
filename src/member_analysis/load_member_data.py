@@ -44,6 +44,13 @@ def add_frame_to_axis(ax):
         ax.spines[position].set_color('0.5')
 
 
+def add_labels(ax):
+    for c in ax.containers:
+        labels = [(v.get_x() + v.get_width()/2, int(v.get_height())) for v in c]
+        for (x, y) in labels:
+            ax.text(x, y, str(y), ha="center", va="bottom")
+
+
 if __name__ == '__main__':
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
@@ -94,10 +101,13 @@ if __name__ == '__main__':
         palette="dark", alpha=.6, height=6
     )
     g.despine(left=True)
-    g.set_axis_labels("", "Antal")
+    g.set_axis_labels("År", "Antal medlemmar")
     g.legend.set_title("")
     g.fig.set_size_inches(7, 4)
     figure = output_directory + '/yearly_overview_since_2019.png'
+    ax = g.facet_axis(0, 0)
+    add_labels(ax)
+    add_frame_to_axis(ax)
     g.savefig(figure, dpi=300)
     print('Created ' + figure)
 
@@ -114,20 +124,15 @@ if __name__ == '__main__':
         palette="dark", alpha=.6, height=6
     )
     g.despine(left=True)
+    g.legend.set_title("")
     g.set_axis_labels("Åldersspann", "Antal medlemmar")
     g.fig.subplots_adjust(top=0.9)  # adjust the Figure in rp
-    g.fig.suptitle(f"HSOK medlemsstatistik {latest_year}-12-31")
+    g.fig.suptitle(f"Totalt antal HSOK-medlemmar: {this_year['Antal'].sum()} ({latest_year}-12-31)")
 
     ax = g.facet_axis(0, 0)
-    for c in ax.containers:
-        labels = [(v.get_x() + v.get_width()/2, int(v.get_height())) for v in c]
-        for (x, y) in labels:
-            ax.text(x, y, str(y), ha="center", va="bottom")
-        # ax.bar_label(c, labels=labels, label_type='edge')
-
-    g.fig.set_size_inches(7, 4)
-
+    add_labels(ax)
     add_frame_to_axis(ax)
+    g.fig.set_size_inches(7, 4)
 
     g.savefig('this_year.png', dpi=300)
     print('Finished')
