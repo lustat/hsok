@@ -38,6 +38,12 @@ def load_member_data(relative_excel_path: str, year_to_sheet: collections.defaul
     return df, bin_category_to_number
 
 
+def add_frame_to_axis(ax):
+    for position in ["left", "bottom", "right", "top"]:
+        ax.spines[position].set_visible(True)
+        ax.spines[position].set_color('0.5')
+
+
 if __name__ == '__main__':
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
@@ -47,7 +53,7 @@ if __name__ == '__main__':
     if not os.path.exists(output_directory):
         raise ValueError('Unknown folder ' + output_directory)
 
-    years = [2019, 2020, 2021]
+    years = [2019, 2020, 2021, 2022]
     year_to_sheet_name = collections.defaultdict(lambda: 'SearchPersons')
     year_to_sheet_name[2019] = 'Data'
     excel_flag = False
@@ -90,11 +96,13 @@ if __name__ == '__main__':
     g.despine(left=True)
     g.set_axis_labels("", "Antal")
     g.legend.set_title("")
+    g.fig.set_size_inches(7, 4)
     figure = output_directory + '/yearly_overview_since_2019.png'
-    g.savefig(figure)
+    g.savefig(figure, dpi=300)
     print('Created ' + figure)
 
-    this_year = summary.loc[summary['År'] == summary['År'].max()]
+    latest_year = summary['År'].max()
+    this_year = summary.loc[summary['År'] == latest_year]
     this_year = this_year.assign(bin_number=this_year['Ålder'].replace(cat_to_num))
     this_year = this_year.sort_values(by='bin_number')
 
@@ -106,14 +114,21 @@ if __name__ == '__main__':
         palette="dark", alpha=.6, height=6
     )
     g.despine(left=True)
-    g.set_axis_labels("", "Antal")
-    g.legend.set_title("")
+    g.set_axis_labels("Åldersspann", "Antal medlemmar")
+    g.fig.subplots_adjust(top=0.9)  # adjust the Figure in rp
+    g.fig.suptitle(f"HSOK medlemsstatistik {latest_year}-12-31")
 
     ax = g.facet_axis(0, 0)
     for c in ax.containers:
-        labels = [int(v.get_height()) for v in c]
-        ax.bar_label(c, labels=labels, label_type='edge')
+        labels = [(v.get_x() + v.get_width()/2, int(v.get_height())) for v in c]
+        for (x, y) in labels:
+            ax.text(x, y, str(y), ha="center", va="bottom")
+        # ax.bar_label(c, labels=labels, label_type='edge')
 
-    g.savefig('this_year.png')
+    g.fig.set_size_inches(7, 4)
+
+    add_frame_to_axis(ax)
+
+    g.savefig('this_year.png', dpi=300)
     print('Finished')
 
