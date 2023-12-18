@@ -60,7 +60,7 @@ if __name__ == '__main__':
     if not os.path.exists(output_directory):
         raise ValueError('Unknown folder ' + output_directory)
 
-    years = [2019, 2020, 2021, 2022]
+    years = [2019, 2020, 2021, 2022, 2023]
     year_to_sheet_name = collections.defaultdict(lambda: 'SearchPersons')
     year_to_sheet_name[2019] = 'Data'
     excel_flag = False
@@ -116,7 +116,8 @@ if __name__ == '__main__':
     this_year = this_year.assign(bin_number=this_year['Ålder'].replace(cat_to_num))
     this_year = this_year.sort_values(by='bin_number')
 
-    this_year.to_excel(output_directory + '/this_year.xlsx')
+    this_year = this_year.reset_index()
+    this_year.to_excel(output_directory + '/this_year.xlsx', index=False)
 
     g = sns.catplot(
         data=this_year, kind="bar",
@@ -135,5 +136,14 @@ if __name__ == '__main__':
     g.fig.set_size_inches(7, 4)
 
     g.savefig('this_year.png', dpi=300)
+
+    men = this_year.loc[this_year["Kön"] == 'Man'].Antal.sum()
+    women = this_year.loc[this_year["Kön"] == 'Kvinna'].Antal.sum()
+    total = this_year["Antal"].sum()
+
+    print(' ')
+    print('Medlemsstatistik: ')
+    print(' ')
+    print(f'Antalet klubbmedlemmar var {total} vid verksamhetsårets slut. Antalet män {men} st och antalet kvinnor {women} st.')
     print('Finished')
 
