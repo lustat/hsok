@@ -60,7 +60,7 @@ if __name__ == '__main__':
     if not os.path.exists(output_directory):
         raise ValueError('Unknown folder ' + output_directory)
 
-    years = [2019, 2020, 2021, 2022, 2023, 2024]
+    years = [2019, 2020, 2021, 2022, 2023, 2024, 2025]
     year_to_sheet_name = collections.defaultdict(lambda: 'SearchPersons')
     year_to_sheet_name[2019] = 'Data'
     excel_flag = False
